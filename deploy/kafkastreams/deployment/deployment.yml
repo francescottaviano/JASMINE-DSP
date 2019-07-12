@@ -1,0 +1,20 @@
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: kafka-streams
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: kafka-streams
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: kafka-streams
+    spec:
+      containers:
+      - image: zed25/jasmine-kafka-streams
+        name: jasmine-kafka-streams

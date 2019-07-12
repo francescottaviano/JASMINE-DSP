@@ -1,0 +1,80 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-internal-service
+  labels:
+    app: kafka
+spec:
+  clusterIP: None
+  ports:
+  - port: 9092
+    protocol: TCP
+    name: internal
+  selector:
+    app: kafka
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker-0-service
+  labels:
+    app: kafka
+spec:
+  type: NodePort
+  ports:
+  - port: 32093
+    nodePort: 32093
+    name: broker-0
+    protocol: TCP
+  selector:
+    app: kafka
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker-1-service
+  labels:
+    app: kafka
+spec:
+  type: NodePort
+  ports:
+  - port: 32094
+    nodePort: 32094
+    name: broker-1
+    protocol: TCP
+  selector:
+    app: kafka
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker-2-service
+  labels:
+    app: kafka
+spec:
+  type: NodePort
+  ports:
+  - port: 32095
+    nodePort: 32095
+    name: broker-2
+    protocol: TCP
+  selector:
+    app: kafka
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jmx-service
+  labels:
+    app: kafka
+spec:
+  type: NodePort
+  ports:
+  - port: 1099
+    nodePort: 32099
+    name: jmx
+    protocol: TCP
+  selector:
+    app: kafka
+---

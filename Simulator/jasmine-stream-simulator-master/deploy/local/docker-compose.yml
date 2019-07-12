@@ -1,0 +1,40 @@
+version: '3.1'
+
+services:
+  redis:
+    image: redis
+    container_name: redis
+    hostname: redis
+    ports:
+      - 6379:6379
+
+  zookeeper:
+    image: zookeeper
+    container_name: zookeeper
+    hostname: zookeeper
+    ports:
+      - 2181:2181
+    environment:
+      ZOO_MY_ID: 1
+
+  kafka:
+    image: kafka
+    container_name: kafka
+    build:
+      context: ./kafka/
+      dockerfile: Dockerfile
+    hostname: localhost
+    depends_on:
+      - zookeeper
+    ports:
+      - 9092:9092
+      - 32099:32099
+    volumes:
+      - "./kafka/scripts/:/scripts/"
+    environment:
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 9092
+      KAFKA_BROKER_ID: 1
+      ZOOKEEPER_CONNECT: zookeeper:2181
+      INITIAL_TOPICS: jasmine-input-topic
+      NUM_PARTITIONS: 4

@@ -1,0 +1,92 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+  labels:
+    app: kafka
+spec:
+  replicas: 3
+  updateStrategy:
+    type: RollingUpdate
+  podManagementPolicy: OrderedReady
+  serviceName: kafka-internal-service
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: "app"
+                    operator: In
+                    values:
+                    - kafka
+              topologyKey: "kubernetes.io/hostname"
+    spec:
+      containers:
+        - name: kafka
+          image: wurstmeister/kafka:2.12-2.2.0
+          ports:
+          - containerPort: 9092
+            name: internal
+          - containerPort: 32093
+            name: broker-0
+          - containerPort: 32094
+            name: broker-1
+          - containerPort: 32095
+            name: broker-2
+          - containerPort: 1099
+            name: jmx
+          env:
+            - name: HOSTNAME_COMMAND
+              value: "echo \"www.kafka.simonemancini.eu\""
+            - name: PORT_COMMAND
+              value: "B_ID=$(hostname | awk -F'-' '{print $2}')\nif [ $B_ID = 0 ]; then\necho 32093\nelif [ $B_ID = 1 ]; then\necho 32094\nelse\necho 32095\nfi"
+            - name: BROKER_ID_COMMAND
+              value: "hostname | awk -F'-' '{print $2}'"
+            - name: KAFKA_ZOOKEEPER_CONNECT
+              value: "zk-0.zk-hs.default.svc.cluster.local:2181,\
+                      zk-1.zk-hs.default.svc.cluster.local:2181,\
+                      zk-2.zk-hs.default.svc.cluster.local:2181"
+            - name: KAFKA_LISTENERS
+              value: "INSIDE://:9092,OUTSIDE://:_{PORT_COMMAND}"
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: "INSIDE://:9092,OUTSIDE://_{HOSTNAME_COMMAND}:_{PORT_COMMAND}"
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              value: "INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT"
+            - name: KAFKA_INTER_BROKER_LISTENER_NAME
+              value: "INSIDE"
+            - name: KAFKA_PORT
+              value: "9092"
+            - name: KAFKA_LOG_DIRS
+              value: "/kafka-logs"
+            - name: KAFKA_JMX_OPTS
+              value: "-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=www.simonemancini.eu -Dcom.sun.management.jmxremote.rmi.port=1099"
+            - name: JMX_PORT
+              value: "1099"
+            - name: KAFKA_CREATE_TOPICS
+              value: "jasmine-input-topic:4:3,jasmine-topArticles1h-output-topic:4:3,jasmine-topArticles24h-output-topic:4:3,jasmine-topArticles7d-output-topic:4:3,jasmine-commentsCount24h-output-topic:4:3,jasmine-commentsCount7d-output-topic:4:3,jasmine-commentsCount1M-output-topic:4:3,jasmine-topUserRatings24h-output-topic:4:3,jasmine-topUserRatings7d-output-topic:4:3,jasmine-topUserRatings1M-output-topic:4:3, article-final-chart-1h:1:3, article-final-chart-24h:1:3, article-final-chart-7d:1:3"
+            - name: KAFKA_DEFAULT_REPLICATION_FACTOR
+              value: "3"
+            - name: KAFKA_NUM_PARTITIONS
+              value: "4"
+          volumeMounts:
+            - name: datadir
+              mountPath: /kafka-logs
+              subPath: logs
+  volumeClaimTemplates:
+    - metadata:
+        name: datadir
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi

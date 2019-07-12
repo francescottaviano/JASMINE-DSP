@@ -1,0 +1,19 @@
+{
+  "name": "jasmine-stream-simulator",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "kafka-node": "^4.1.3",
+    "csv-parser": "^2.3.0",
+    "system-sleep": "^1.3.6"
+  }
+}
